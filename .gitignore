@@ -1,0 +1,13 @@
+.venv/
+__pycache__/
+*.py[cod]
+.DS_Store
+
+# Local application data
+phone_inventory.db
+*.db
+
+# Unused or private local media
+*.jpeg
+*.jpg
+*.png
