@@ -27,9 +27,10 @@ To use it from an iPhone, keep the Mac and iPhone on the same Wi-Fi network,
 open `http://YOUR-MAC-IP:5000` on the iPhone, then choose Safari's **Add to
 Home Screen** option. The Mac must keep the web server running.
 
-The Overview screen includes **Stock list** and **Sales list** download
-buttons. They create CSV files that can be shared by email, WhatsApp, or
-AirDrop.
+The Overview screen includes **Stock list**, **Sales list**, and **Daily
+totals** download buttons. It also includes a clean **Sales PDF** containing
+every sale with quantity, prices, profit, and report totals. These files can be
+shared by email, WhatsApp, or AirDrop.
 
 ## Files
 

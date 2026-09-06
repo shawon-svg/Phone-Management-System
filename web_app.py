@@ -3,6 +3,12 @@ import csv
 import io
 
 from flask import Flask, Response, jsonify, render_template, request
+from reportlab.lib import colors
+from reportlab.lib.pagesizes import A4, landscape
+from reportlab.lib.styles import getSampleStyleSheet
+from reportlab.lib.units import mm
+from reportlab.platypus import Paragraph, SimpleDocTemplate, Spacer, Table, TableStyle
+from xml.sax.saxutils import escape
 
 from database import Database
 
@@ -32,6 +38,64 @@ def csv_download(filename, headers, rows):
     return Response(
         output.getvalue(),
         mimetype="text/csv",
+        headers={"Content-Disposition": f"attachment; filename={filename}"},
+    )
+
+
+def pdf_download(filename, sales, summary, stock_stats):
+    output = io.BytesIO()
+    document = SimpleDocTemplate(
+        output, pagesize=landscape(A4), rightMargin=12 * mm,
+        leftMargin=12 * mm, topMargin=12 * mm, bottomMargin=12 * mm,
+    )
+    styles = getSampleStyleSheet()
+    body = styles["BodyText"]
+    body.fontSize = 7
+    body.leading = 9
+    title = styles["Title"]
+    title.fontSize = 18
+    story = [Paragraph("PhoneTrack - Complete Sales Report", title)]
+    story.append(Paragraph(
+        f"Generated {summary['date']} | Current stock: {stock_stats['total_units']} units "
+        f"({stock_stats['stock_value']:,.2f})", body,
+    ))
+    story.append(Spacer(1, 6))
+    story.append(Paragraph(
+        f"Sold today: {summary['units_sold']} units | Revenue: {summary['total_revenue']:,.2f} | "
+        f"Cost: {summary['total_cost']:,.2f} | Profit: {summary['total_profit']:,.2f}", body,
+    ))
+    story.append(Spacer(1, 10))
+
+    table_rows = [["Date & Time", "Model", "SL No.", "IMEI", "Qty", "Cost",
+                   "Selling Price", "Profit"]]
+    for sale in sales:
+        table_rows.append([
+            sale[13], escape(str(sale[4] or "")), escape(str(sale[2] or "")),
+            escape(str(sale[3] or "")), str(sale[9]), f"{sale[10]:,.2f}",
+            f"{sale[11]:,.2f}", f"{sale[12]:,.2f}",
+        ])
+    if len(table_rows) == 1:
+        table_rows.append(["No sales recorded", "", "", "", "", "", "", ""])
+    table = Table(table_rows, repeatRows=1, colWidths=[31 * mm, 45 * mm, 22 * mm,
+                                                       38 * mm, 12 * mm, 24 * mm,
+                                                       29 * mm, 24 * mm])
+    table.setStyle(TableStyle([
+        ("BACKGROUND", (0, 0), (-1, 0), colors.HexColor("#202832")),
+        ("TEXTCOLOR", (0, 0), (-1, 0), colors.white),
+        ("FONTNAME", (0, 0), (-1, 0), "Helvetica-Bold"),
+        ("FONTSIZE", (0, 0), (-1, -1), 7),
+        ("GRID", (0, 0), (-1, -1), 0.3, colors.HexColor("#c8cdd4")),
+        ("ROWBACKGROUNDS", (0, 1), (-1, -1),
+         [colors.white, colors.HexColor("#f1f3f5")]),
+        ("ALIGN", (4, 1), (-1, -1), "RIGHT"),
+        ("VALIGN", (0, 0), (-1, -1), "MIDDLE"),
+        ("TOPPADDING", (0, 0), (-1, -1), 5),
+        ("BOTTOMPADDING", (0, 0), (-1, -1), 5),
+    ]))
+    story.append(table)
+    document.build(story)
+    return Response(
+        output.getvalue(), mimetype="application/pdf",
         headers={"Content-Disposition": f"attachment; filename={filename}"},
     )
 
@@ -138,6 +202,28 @@ def export_sales():
          "Storage", "Color", "Quantity", "Cost Price", "Selling Price",
          "Profit", "Sold At"),
         rows,
+    )
+
+
+@app.get("/export/daily-summary.csv")
+def export_daily_summary():
+    summary = db.get_today_summary()
+    stats = db.get_dashboard_stats()
+    return csv_download(
+        "phonetrack-daily-summary.csv",
+        ("Date", "Current Stock Units", "Current Stock Value", "Units Sold Today",
+         "Revenue Today", "Cost Today", "Profit Today"),
+        [[summary["date"], stats["total_units"], stats["stock_value"],
+          summary["units_sold"], summary["total_revenue"], summary["total_cost"],
+          summary["total_profit"]]],
+    )
+
+
+@app.get("/export/sales.pdf")
+def export_sales_pdf():
+    return pdf_download(
+        "phonetrack-complete-sales-report.pdf",
+        db.get_sales(), db.get_today_summary(), db.get_dashboard_stats(),
     )
 
 
