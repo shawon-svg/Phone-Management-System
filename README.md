@@ -5,12 +5,27 @@ A clean, dark-mode desktop app for tracking phone stock and sales, built with **
 ## Setup
 
 ```bash
-pip install -r requirements.txt
-python app.py
+python3 -m pip install -r requirements.txt
+python3 app.py
 ```
 
 Requires Python 3.9+. Data is stored locally in `phone_inventory.db` (SQLite),
 created automatically next to `app.py` on first run.
+
+## Use on iPhone
+
+The desktop app cannot run directly on iOS. A mobile-friendly web version is
+included in `web_app.py` and can be opened in Safari or added to the iPhone
+Home Screen.
+
+```bash
+source .venv/bin/activate
+python3 web_app.py
+```
+
+To use it from an iPhone, keep the Mac and iPhone on the same Wi-Fi network,
+open `http://YOUR-MAC-IP:5000` on the iPhone, then choose Safari's **Add to
+Home Screen** option. The Mac must keep the web server running.
 
 ## Files
 

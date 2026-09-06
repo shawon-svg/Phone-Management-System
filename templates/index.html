@@ -1,0 +1,100 @@
+<!doctype html>
+<html lang="en">
+
+<head>
+    <meta charset="utf-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+    <meta name="theme-color" content="#111318">
+    <link rel="manifest" href="/manifest.json">
+    <link rel="stylesheet" href="/static/style.css">
+    <title>PhoneTrack</title>
+</head>
+
+<body>
+    <header class="topbar">
+        <div>
+            <p class="eyebrow">INVENTORY CONTROL</p>
+            <h1>PhoneTrack</h1>
+        </div><button id="refresh" class="icon-button" aria-label="Refresh">↻</button>
+    </header>
+    <main>
+        <section id="dashboard" class="view active">
+            <div class="section-heading">
+                <div>
+                    <p class="eyebrow">TODAY</p>
+                    <h2>Overview</h2>
+                </div>
+            </div>
+            <div class="stats">
+                <article><span>In stock</span><strong id="stat-stock">0</strong></article>
+                <article><span>Stock value</span><strong id="stat-value">0.00</strong></article>
+                <article><span>Sold today</span><strong id="stat-sold">0</strong></article>
+                <article><span>Profit today</span><strong id="stat-profit">0.00</strong></article>
+            </div>
+            <div class="panel">
+                <div class="panel-title">
+                    <h3>Recent sales</h3><button data-view="history" class="text-button">View all</button>
+                </div>
+                <div id="recent-sales" class="list"></div>
+            </div>
+        </section>
+
+        <section id="stock" class="view">
+            <div class="section-heading">
+                <div>
+                    <p class="eyebrow">CATALOG</p>
+                    <h2>Stock</h2>
+                </div><button id="open-add" class="primary small">+ Add</button>
+            </div>
+            <input id="stock-search" class="search" placeholder="Search model, IMEI, SL No., specs...">
+            <div id="stock-list" class="list"></div>
+        </section>
+
+        <section id="checkout" class="view">
+            <div class="section-heading">
+                <div>
+                    <p class="eyebrow">POINT OF SALE</p>
+                    <h2>Checkout</h2>
+                </div>
+            </div>
+            <input id="checkout-search" class="search" placeholder="Find an item to sell...">
+            <div id="checkout-list" class="list"></div>
+        </section>
+
+        <section id="history" class="view">
+            <div class="section-heading">
+                <div>
+                    <p class="eyebrow">RECORDS</p>
+                    <h2>Sales history</h2>
+                </div>
+            </div>
+            <div id="history-list" class="list"></div>
+        </section>
+    </main>
+
+    <nav class="nav"><button data-view="dashboard" class="active">⌂<span>Overview</span></button><button
+            data-view="stock">▣<span>Stock</span></button><button
+            data-view="checkout">▤<span>Sell</span></button><button data-view="history">◷<span>History</span></button>
+    </nav>
+
+    <dialog id="add-dialog">
+        <form method="dialog" id="add-form">
+            <div class="dialog-title">
+                <h2>Add stock</h2><button value="cancel" class="icon-button">×</button>
+            </div>
+            <div class="form-grid"><label>SL No.<input name="sl_no" required></label><label>IMEI<input name="imei"
+                        required></label><label class="wide">Brand / Model<input name="model" required></label><label
+                    class="wide">Chipset<input name="chipset" required></label><label>RAM<input name="ram"
+                        placeholder="8GB" required></label><label>Storage<input name="storage" placeholder="128GB"
+                        required></label><label>Color<input name="color" required></label><label>Quantity<input
+                        name="quantity" type="number" min="1" value="1" required></label><label>Cost price<input
+                        name="cost_price" type="number" min="0" step="0.01" value="0" required></label><label>Selling
+                    price<input name="sell_price" type="number" min="0" step="0.01" value="0" required></label></div>
+            <button class="primary" type="submit">Save stock</button>
+        </form>
+    </dialog>
+    <div id="toast" role="status"></div>
+    <script src="/static/app.js"></script>
+</body>
+
+</html>
