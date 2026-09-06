@@ -1,6 +1,8 @@
 import os
+import csv
+import io
 
-from flask import Flask, jsonify, render_template, request
+from flask import Flask, Response, jsonify, render_template, request
 
 from database import Database
 
@@ -20,6 +22,18 @@ def sale_dict(row):
             "storage", "color", "quantity", "cost_price", "sell_price",
             "profit", "sold_at")
     return dict(zip(keys, row))
+
+
+def csv_download(filename, headers, rows):
+    output = io.StringIO()
+    writer = csv.writer(output)
+    writer.writerow(headers)
+    writer.writerows(rows)
+    return Response(
+        output.getvalue(),
+        mimetype="text/csv",
+        headers={"Content-Disposition": f"attachment; filename={filename}"},
+    )
 
 
 @app.get("/")
@@ -102,6 +116,29 @@ def sales():
 @app.get("/api/summary")
 def summary():
     return jsonify(db.get_today_summary())
+
+
+@app.get("/export/stock.csv")
+def export_stock():
+    rows = db.get_inventory()
+    return csv_download(
+        "phonetrack-stock.csv",
+        ("ID", "SL No.", "IMEI", "Model", "Chipset", "RAM", "Storage",
+         "Color", "Quantity", "Cost Price", "Selling Price"),
+        rows,
+    )
+
+
+@app.get("/export/sales.csv")
+def export_sales():
+    rows = db.get_sales()
+    return csv_download(
+        "phonetrack-sales-history.csv",
+        ("Sale ID", "Item ID", "SL No.", "IMEI", "Model", "Chipset", "RAM",
+         "Storage", "Color", "Quantity", "Cost Price", "Selling Price",
+         "Profit", "Sold At"),
+        rows,
+    )
 
 
 if __name__ == "__main__":

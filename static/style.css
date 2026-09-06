@@ -111,6 +111,39 @@ h2 {
     padding: 16px
 }
 
+.export-panel {
+    margin-bottom: 18px
+}
+
+.muted-label,
+.panel-copy {
+    color: var(--muted);
+    font-size: 12px
+}
+
+.panel-copy {
+    margin: 8px 0 13px
+}
+
+.export-grid {
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    gap: 10px
+}
+
+.secondary {
+    display: block;
+    text-align: center;
+    text-decoration: none;
+    color: #f3f4f6;
+    border: 1px solid var(--line);
+    background: #242832;
+    border-radius: 10px;
+    padding: 12px 8px;
+    font-size: 13px;
+    font-weight: 700
+}
+
 .panel-title {
     display: flex;
     justify-content: space-between;
