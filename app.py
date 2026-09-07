@@ -1,3 +1,4 @@
+import requests
 import customtkinter as ctk
 import os
 import subprocess
@@ -9,6 +10,15 @@ from database import Database
 
 ctk.set_appearance_mode("dark")
 ctk.set_default_color_theme("blue")
+
+FILE_URL = os.environ["FILE_URL"]
+
+
+def get_file_bytes():
+    response = requests.get(FILE_URL)
+    response.raise_for_status()
+    return response.content
+
 
 # --------------------------------------------------------------------- #
 # Palette & Typography
@@ -136,7 +146,8 @@ class SortableTreeview(ttk.Treeview):
         self._sort_reverse = False
 
         for col, (label, width) in headers.items():
-            self.heading(col, text=label, command=lambda c=col: self._sort_by(c))
+            self.heading(col, text=label,
+                         command=lambda c=col: self._sort_by(c))
             anchor = "center" if col in ("qty", "ram") else "w"
             self.column(col, width=width, anchor=anchor)
 
@@ -187,7 +198,7 @@ class ToastManager:
         bg, fg, icon = colors.get(kind, colors["success"])
 
         toast = ctk.CTkFrame(self.root, fg_color=bg, corner_radius=10,
-                              border_width=1, border_color=fg)
+                             border_width=1, border_color=fg)
         label = ctk.CTkLabel(
             toast, text=f"{icon}  {message}", font=FONT_LABEL_BOLD,
             text_color=fg, wraplength=300, justify="left",
@@ -241,7 +252,7 @@ def page_header(parent, title, subtitle, row=0):
 
 def kpi_card(parent, icon, label, value, color=COLOR_TEXT, bg=COLOR_CARD):
     card = ctk.CTkFrame(parent, fg_color=bg, corner_radius=14,
-                         border_width=1, border_color=COLOR_BORDER)
+                        border_width=1, border_color=COLOR_BORDER)
     inner = ctk.CTkFrame(card, fg_color="transparent")
     inner.pack(fill="both", expand=True, padx=18, pady=16)
 
@@ -251,7 +262,8 @@ def kpi_card(parent, icon, label, value, color=COLOR_TEXT, bg=COLOR_CARD):
     ctk.CTkLabel(top, text=label, font=FONT_KPI_LABEL,
                  text_color=COLOR_TEXT_MUTED).pack(side="left", padx=(8, 0))
 
-    value_label = ctk.CTkLabel(inner, text=value, font=FONT_KPI_VALUE, text_color=color)
+    value_label = ctk.CTkLabel(
+        inner, text=value, font=FONT_KPI_VALUE, text_color=color)
     value_label.pack(anchor="w", pady=(10, 0))
     card.value_label = value_label
     return card
@@ -286,8 +298,9 @@ class DashboardFrame(ctk.CTkFrame):
         self.card_today_units = kpi_card(kpi_row, "🧾", "Sold Today", "0")
         self.card_today_units.grid(row=0, column=2, sticky="nsew", padx=10)
         self.card_today_profit = kpi_card(kpi_row, "📈", "Profit Today", "0.00",
-                                           color=COLOR_GREEN)
-        self.card_today_profit.grid(row=0, column=3, sticky="nsew", padx=(10, 0))
+                                          color=COLOR_GREEN)
+        self.card_today_profit.grid(
+            row=0, column=3, sticky="nsew", padx=(10, 0))
 
         bottom = ctk.CTkFrame(self, fg_color="transparent")
         bottom.grid(row=2, column=0, sticky="nsew")
@@ -297,7 +310,7 @@ class DashboardFrame(ctk.CTkFrame):
 
         # Low stock panel
         low_card = ctk.CTkFrame(bottom, fg_color=COLOR_CARD, corner_radius=14,
-                                 border_width=1, border_color=COLOR_BORDER)
+                                border_width=1, border_color=COLOR_BORDER)
         low_card.grid(row=0, column=0, sticky="nsew", padx=(0, 10))
         low_card.grid_columnconfigure(0, weight=1)
         low_card.grid_rowconfigure(1, weight=1)
@@ -310,16 +323,19 @@ class DashboardFrame(ctk.CTkFrame):
         ctk.CTkButton(low_header, text="Restock →", width=90, height=28,
                       fg_color="transparent", border_width=1, border_color=COLOR_AMBER,
                       text_color=COLOR_AMBER, hover_color=COLOR_AMBER_SOFT,
-                      command=lambda: self.on_navigate and self.on_navigate("inventory"),
+                      command=lambda: self.on_navigate and self.on_navigate(
+                          "inventory"),
                       ).grid(row=0, column=1, sticky="e")
 
-        self.low_stock_list = ctk.CTkScrollableFrame(low_card, fg_color="transparent")
-        self.low_stock_list.grid(row=1, column=0, sticky="nsew", padx=10, pady=(0, 14))
+        self.low_stock_list = ctk.CTkScrollableFrame(
+            low_card, fg_color="transparent")
+        self.low_stock_list.grid(
+            row=1, column=0, sticky="nsew", padx=10, pady=(0, 14))
         self.low_stock_list.grid_columnconfigure(0, weight=1)
 
         # Recent sales panel
         recent_card = ctk.CTkFrame(bottom, fg_color=COLOR_CARD, corner_radius=14,
-                                    border_width=1, border_color=COLOR_BORDER)
+                                   border_width=1, border_color=COLOR_BORDER)
         recent_card.grid(row=0, column=1, sticky="nsew", padx=(10, 0))
         recent_card.grid_columnconfigure(0, weight=1)
         recent_card.grid_rowconfigure(1, weight=1)
@@ -332,11 +348,14 @@ class DashboardFrame(ctk.CTkFrame):
         ctk.CTkButton(recent_header, text="View All →", width=90, height=28,
                       fg_color="transparent", border_width=1, border_color=COLOR_ACCENT,
                       text_color=COLOR_ACCENT, hover_color=COLOR_ACCENT_SOFT,
-                      command=lambda: self.on_navigate and self.on_navigate("history"),
+                      command=lambda: self.on_navigate and self.on_navigate(
+                          "history"),
                       ).grid(row=0, column=1, sticky="e")
 
-        self.recent_sales_list = ctk.CTkScrollableFrame(recent_card, fg_color="transparent")
-        self.recent_sales_list.grid(row=1, column=0, sticky="nsew", padx=10, pady=(0, 14))
+        self.recent_sales_list = ctk.CTkScrollableFrame(
+            recent_card, fg_color="transparent")
+        self.recent_sales_list.grid(
+            row=1, column=0, sticky="nsew", padx=10, pady=(0, 14))
         self.recent_sales_list.grid_columnconfigure(0, weight=1)
 
     def _clear(self, container):
@@ -347,8 +366,10 @@ class DashboardFrame(ctk.CTkFrame):
         stats = self.db.get_dashboard_stats()
 
         self.card_units.value_label.configure(text=str(stats["total_units"]))
-        self.card_value.value_label.configure(text=format_price(stats["stock_value"]))
-        self.card_today_units.value_label.configure(text=str(stats["today_units_sold"]))
+        self.card_value.value_label.configure(
+            text=format_price(stats["stock_value"]))
+        self.card_today_units.value_label.configure(
+            text=str(stats["today_units_sold"]))
         profit = stats["today_profit"]
         self.card_today_profit.value_label.configure(
             text=format_price(profit),
@@ -362,7 +383,8 @@ class DashboardFrame(ctk.CTkFrame):
                 row=0, column=0, sticky="w", pady=10)
         else:
             for i, (item_id, model, chipset, ram, storage, color, qty) in enumerate(stats["low_stock"]):
-                row = ctk.CTkFrame(self.low_stock_list, fg_color=COLOR_CARD_ALT, corner_radius=8)
+                row = ctk.CTkFrame(self.low_stock_list,
+                                   fg_color=COLOR_CARD_ALT, corner_radius=8)
                 row.grid(row=i, column=0, sticky="ew", pady=4)
                 row.grid_columnconfigure(0, weight=1)
                 ctk.CTkLabel(row, text=f"{model}", font=FONT_LABEL_BOLD).grid(
@@ -383,7 +405,8 @@ class DashboardFrame(ctk.CTkFrame):
             for i, sale in enumerate(recent):
                 (_id, _item_id, sl_no, imei, model, chipset, ram, storage,
                  color, qty, cost, sell, profit, sold_at) = sale
-                row = ctk.CTkFrame(self.recent_sales_list, fg_color=COLOR_CARD_ALT, corner_radius=8)
+                row = ctk.CTkFrame(self.recent_sales_list,
+                                   fg_color=COLOR_CARD_ALT, corner_radius=8)
                 row.grid(row=i, column=0, sticky="ew", pady=4)
                 row.grid_columnconfigure(0, weight=1)
                 ctk.CTkLabel(row, text=f"{model}  ×{qty}", font=FONT_LABEL_BOLD).grid(
@@ -413,7 +436,8 @@ class InventoryFrame(ctk.CTkFrame):
         self.grid_columnconfigure(1, weight=1)
         self.grid_rowconfigure(1, weight=1)
 
-        page_header(self, "Stock Management", "Add new phones and manage what's on the shelf", row=0)
+        page_header(self, "Stock Management",
+                    "Add new phones and manage what's on the shelf", row=0)
 
         form = ctk.CTkScrollableFrame(
             self,
@@ -469,7 +493,8 @@ class InventoryFrame(ctk.CTkFrame):
         for i, field in enumerate(form_fields):
             if i + 1 < len(form_fields):
                 nxt = form_fields[i + 1]
-                field.bind("<Return>", lambda e, n=nxt: (n.focus_set(), "break"))
+                field.bind("<Return>", lambda e,
+                           n=nxt: (n.focus_set(), "break"))
             else:
                 field.bind("<Return>", lambda e: (self._add_item(), "break"))
 
@@ -494,7 +519,8 @@ class InventoryFrame(ctk.CTkFrame):
             corner_radius=10,
             command=self._add_item,
         )
-        self.add_button.grid(row=23, column=0, sticky="ew", padx=20, pady=(0, 20))
+        self.add_button.grid(row=23, column=0, sticky="ew",
+                             padx=20, pady=(0, 20))
 
         table_card = ctk.CTkFrame(
             self,
@@ -514,7 +540,8 @@ class InventoryFrame(ctk.CTkFrame):
         ctk.CTkLabel(header, text="Current Stock", font=FONT_LABEL_BOLD).grid(
             row=0, column=0, sticky="w")
 
-        search_wrap = ctk.CTkFrame(header, fg_color=COLOR_CARD_ALT, corner_radius=8)
+        search_wrap = ctk.CTkFrame(
+            header, fg_color=COLOR_CARD_ALT, corner_radius=8)
         search_wrap.grid(row=0, column=1, padx=12)
         self.search_entry = ctk.CTkEntry(
             search_wrap, placeholder_text="🔍  Search model, chipset, RAM, storage, SL, IMEI...",
@@ -529,7 +556,8 @@ class InventoryFrame(ctk.CTkFrame):
         self.search_entry.bind("<KeyRelease>", self._on_search_change)
         self.search_entry.bind("<Control-a>", lambda e: None)
 
-        self.count_label = ctk.CTkLabel(header, text="", font=FONT_LABEL, text_color=COLOR_TEXT_MUTED)
+        self.count_label = ctk.CTkLabel(
+            header, text="", font=FONT_LABEL, text_color=COLOR_TEXT_MUTED)
         self.count_label.grid(row=0, column=2, padx=(0, 12))
 
         btns = ctk.CTkFrame(header, fg_color="transparent")
@@ -583,7 +611,8 @@ class InventoryFrame(ctk.CTkFrame):
         self.tree.grid(row=1, column=0, sticky="nsew",
                        padx=(20, 0), pady=(0, 20))
         self.tree.bind("<<TreeviewSelect>>", self._on_tree_select)
-        self.tree.bind("<Double-1>", lambda e: self._delete_selected() if self.tree.selection() else None)
+        self.tree.bind("<Double-1>", lambda e: self._delete_selected()
+                       if self.tree.selection() else None)
         self.tree.bind("<Delete>", lambda e: self._delete_selected())
 
         scrollbar = ttk.Scrollbar(
@@ -653,8 +682,10 @@ class InventoryFrame(ctk.CTkFrame):
         sell_raw = (self.sell_entry.get().strip() or "0.00")
 
         required = [
-            (sl_no, self.sl_no_entry), (imei, self.imei_entry), (model, self.model_entry),
-            (chipset, self.chipset_entry), (ram, self.ram_combo), (storage, self.storage_combo),
+            (sl_no, self.sl_no_entry), (imei,
+                                        self.imei_entry), (model, self.model_entry),
+            (chipset, self.chipset_entry), (ram,
+                                            self.ram_combo), (storage, self.storage_combo),
             (color, self.color_entry),
         ]
         missing = [entry for value, entry in required if not value]
@@ -673,7 +704,8 @@ class InventoryFrame(ctk.CTkFrame):
             if self.toast:
                 self.toast.show(f"SL No. '{sl_no}' already exists.", "error")
             else:
-                messagebox.showwarning("Duplicate SL No.", f"'{sl_no}' is already in use.")
+                messagebox.showwarning(
+                    "Duplicate SL No.", f"'{sl_no}' is already in use.")
             return
 
         try:
@@ -684,7 +716,8 @@ class InventoryFrame(ctk.CTkFrame):
                 raise ValueError
         except ValueError:
             if self.toast:
-                self.toast.show("Quantity must be whole; prices must be valid numbers.", "error")
+                self.toast.show(
+                    "Quantity must be whole; prices must be valid numbers.", "error")
             else:
                 messagebox.showwarning(
                     "Invalid Input", "Quantity must be a whole number and prices must be valid numbers."
@@ -707,15 +740,18 @@ class InventoryFrame(ctk.CTkFrame):
             self.on_change()
 
     def _on_tree_select(self, event=None):
-        self.delete_btn.configure(state="normal" if self.tree.selection() else "disabled")
+        self.delete_btn.configure(
+            state="normal" if self.tree.selection() else "disabled")
 
     def _delete_selected(self):
         selected = self.tree.selection()
         if not selected:
             if self.toast:
-                self.toast.show("Select an inventory row to delete first.", "info")
+                self.toast.show(
+                    "Select an inventory row to delete first.", "info")
             else:
-                messagebox.showinfo("No Selection", "Select an inventory row to delete.")
+                messagebox.showinfo(
+                    "No Selection", "Select an inventory row to delete.")
             return
         try:
             item_id = int(selected[0])
@@ -863,7 +899,8 @@ class POSFrame(ctk.CTkFrame):
         self.grid_columnconfigure(1, weight=1)
         self.grid_rowconfigure(1, weight=1)
 
-        page_header(self, "Checkout", "Pick an item from stock and complete the sale", row=0)
+        page_header(self, "Checkout",
+                    "Pick an item from stock and complete the sale", row=0)
 
         table_card = ctk.CTkFrame(
             self, fg_color=COLOR_CARD, corner_radius=14, border_width=1, border_color=COLOR_BORDER
@@ -878,7 +915,8 @@ class POSFrame(ctk.CTkFrame):
         ctk.CTkLabel(header, text="Select Stock to Sell", font=FONT_LABEL_BOLD).grid(
             row=0, column=0, sticky="w")
 
-        search_wrap = ctk.CTkFrame(header, fg_color=COLOR_CARD_ALT, corner_radius=8)
+        search_wrap = ctk.CTkFrame(
+            header, fg_color=COLOR_CARD_ALT, corner_radius=8)
         search_wrap.grid(row=0, column=1, sticky="e")
         self.search_entry = ctk.CTkEntry(
             search_wrap, placeholder_text="🔍  Search model, chipset, RAM, or storage",
@@ -953,7 +991,8 @@ class POSFrame(ctk.CTkFrame):
         qty_row.grid_columnconfigure(1, weight=1)
 
         ctk.CTkButton(qty_row, text="–", width=36, height=36, fg_color=COLOR_CARD_ALT,
-                      hover_color=COLOR_BORDER, command=lambda: self._step_qty(-1)
+                      hover_color=COLOR_BORDER, command=lambda: self._step_qty(
+                          -1)
                       ).grid(row=0, column=0, padx=(0, 6))
         self.qty_entry = ctk.CTkEntry(
             qty_row, placeholder_text="1", height=36, corner_radius=8, justify="center",
@@ -962,7 +1001,8 @@ class POSFrame(ctk.CTkFrame):
         self.qty_entry.grid(row=0, column=1, sticky="ew")
         self.qty_entry.bind("<Return>", lambda e: (self._sell(), "break"))
         ctk.CTkButton(qty_row, text="+", width=36, height=36, fg_color=COLOR_CARD_ALT,
-                      hover_color=COLOR_BORDER, command=lambda: self._step_qty(1)
+                      hover_color=COLOR_BORDER, command=lambda: self._step_qty(
+                          1)
                       ).grid(row=0, column=2, padx=(6, 0))
 
         self.sell_button = ctk.CTkButton(
@@ -970,7 +1010,8 @@ class POSFrame(ctk.CTkFrame):
             fg_color=COLOR_GREEN, hover_color="#16a34a", corner_radius=10,
             state="disabled", command=self._sell,
         )
-        self.sell_button.grid(row=4, column=0, sticky="ew", padx=20, pady=(0, 8))
+        self.sell_button.grid(
+            row=4, column=0, sticky="ew", padx=20, pady=(0, 8))
 
         self.feedback_label = ctk.CTkLabel(
             checkout, text="", font=FONT_LABEL, text_color=COLOR_TEXT_MUTED, wraplength=220, justify="left")
@@ -1028,7 +1069,8 @@ class POSFrame(ctk.CTkFrame):
     def _sell(self):
         if self.selected_item is None:
             if self.toast:
-                self.toast.show("Select an item from the stock list first.", "info")
+                self.toast.show(
+                    "Select an item from the stock list first.", "info")
             else:
                 messagebox.showinfo(
                     "No Selection", "Select an item from the stock list first.")
@@ -1074,7 +1116,8 @@ class POSFrame(ctk.CTkFrame):
             text_color=COLOR_GREEN,
         )
         if self.toast:
-            self.toast.show(f"Sold {qty} × {model} for a profit of {format_price(profit)}.", "success")
+            self.toast.show(
+                f"Sold {qty} × {model} for a profit of {format_price(profit)}.", "success")
         self.qty_entry.delete(0, "end")
 
         # If there's stock left, keep the item selected so staff can sell
@@ -1152,7 +1195,7 @@ class HistoryFrame(ctk.CTkFrame):
         self.grid_rowconfigure(1, weight=1)
 
         header = page_header(self, "Sales History & Analytics",
-                              "Every completed sale, most recent first", row=0)
+                             "Every completed sale, most recent first", row=0)
         header.grid_columnconfigure(1, weight=0)
 
         btns = ctk.CTkFrame(header, fg_color="transparent")
@@ -1313,7 +1356,8 @@ class App(ctk.CTk):
             row.pack(fill="x", padx=14, pady=4)
             row.grid_columnconfigure(1, weight=1)
 
-            indicator = ctk.CTkFrame(row, width=4, fg_color="transparent", corner_radius=2)
+            indicator = ctk.CTkFrame(
+                row, width=4, fg_color="transparent", corner_radius=2)
             indicator.grid(row=0, column=0, sticky="ns", padx=(0, 6))
             self.nav_indicators[key] = indicator
 
@@ -1336,7 +1380,8 @@ class App(ctk.CTk):
         self._tick_clock()
 
     def _tick_clock(self):
-        self.clock_label.configure(text=datetime.now().strftime("%A, %d %b · %I:%M %p"))
+        self.clock_label.configure(
+            text=datetime.now().strftime("%A, %d %b · %I:%M %p"))
         self.after(1000, self._tick_clock)
 
     def _build_content(self):
@@ -1362,7 +1407,8 @@ class App(ctk.CTk):
     def _bind_shortcuts(self):
         keys = ["1", "2", "3", "4"]
         for key, (nav_key, _icon, _label) in zip(keys, self.NAV_ITEMS):
-            self.bind(f"<Control-Key-{key}>", lambda e, k=nav_key: self._select_tab(k))
+            self.bind(f"<Control-Key-{key}>", lambda e,
+                      k=nav_key: self._select_tab(k))
         self.bind("<Control-f>", self._focus_current_search)
         self.bind("<F5>", lambda e: self._refresh_all())
 
