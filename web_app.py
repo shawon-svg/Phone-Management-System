@@ -100,6 +100,99 @@ def pdf_download(filename, sales, summary, stock_stats):
     )
 
 
+def stock_pdf_download(filename, inventory, stock_stats):
+    output = io.BytesIO()
+    document = SimpleDocTemplate(
+        output, pagesize=landscape(A4), rightMargin=12 * mm,
+        leftMargin=12 * mm, topMargin=12 * mm, bottomMargin=12 * mm,
+    )
+    styles = getSampleStyleSheet()
+    body = styles["BodyText"]
+    body.fontSize = 7
+    body.leading = 9
+    title = styles["Title"]
+    title.fontSize = 18
+    story = [Paragraph("PhoneTrack - Current Stock Report", title)]
+    story.append(Paragraph(
+        f"Current stock: {stock_stats['total_units']} units | "
+        f"Stock value: {stock_stats['stock_value']:,.2f}", body,
+    ))
+    story.append(Spacer(1, 10))
+    table_rows = [["SL No.", "IMEI", "Model", "Chipset", "RAM", "Storage",
+                   "Color", "Qty", "Cost", "Selling Price"]]
+    for item in inventory:
+        table_rows.append([
+            escape(str(item[1] or "")), escape(str(item[2] or "")),
+            escape(str(item[3] or "")), escape(str(item[4] or "")),
+            escape(str(item[5] or "")), escape(str(item[6] or "")),
+            escape(str(item[7] or "")), str(item[8]), f"{item[9]:,.2f}",
+            f"{item[10]:,.2f}",
+        ])
+    if len(table_rows) == 1:
+        table_rows.append(["No stock recorded", "", "",
+                          "", "", "", "", "", "", ""])
+    table = Table(table_rows, repeatRows=1)
+    table.setStyle(TableStyle([
+        ("BACKGROUND", (0, 0), (-1, 0), colors.HexColor("#202832")),
+        ("TEXTCOLOR", (0, 0), (-1, 0), colors.white),
+        ("FONTNAME", (0, 0), (-1, 0), "Helvetica-Bold"),
+        ("FONTSIZE", (0, 0), (-1, -1), 7),
+        ("GRID", (0, 0), (-1, -1), 0.3, colors.HexColor("#c8cdd4")),
+        ("ROWBACKGROUNDS", (0, 1), (-1, -1),
+         [colors.white, colors.HexColor("#f1f3f5")]),
+        ("ALIGN", (7, 1), (-1, -1), "RIGHT"),
+        ("VALIGN", (0, 0), (-1, -1), "MIDDLE"),
+        ("TOPPADDING", (0, 0), (-1, -1), 5),
+        ("BOTTOMPADDING", (0, 0), (-1, -1), 5),
+    ]))
+    story.append(table)
+    document.build(story)
+    return Response(
+        output.getvalue(), mimetype="application/pdf",
+        headers={"Content-Disposition": f"attachment; filename={filename}"},
+    )
+
+
+def summary_pdf_download(filename, summary, stock_stats):
+    output = io.BytesIO()
+    document = SimpleDocTemplate(
+        output, pagesize=A4, rightMargin=18 * mm,
+        leftMargin=18 * mm, topMargin=18 * mm, bottomMargin=18 * mm,
+    )
+    styles = getSampleStyleSheet()
+    title = styles["Title"]
+    title.fontSize = 20
+    story = [Paragraph("PhoneTrack - Daily Summary", title), Spacer(1, 12)]
+    rows = [
+        ["Date", summary["date"]],
+        ["Current stock units", str(stock_stats["total_units"])],
+        ["Current stock value", f"{stock_stats['stock_value']:,.2f}"],
+        ["Units sold today", str(summary["units_sold"])],
+        ["Revenue today", f"{summary['total_revenue']:,.2f}"],
+        ["Cost today", f"{summary['total_cost']:,.2f}"],
+        ["Profit today", f"{summary['total_profit']:,.2f}"],
+    ]
+    table = Table(rows, colWidths=[75 * mm, 75 * mm])
+    table.setStyle(TableStyle([
+        ("BACKGROUND", (0, 0), (0, -1), colors.HexColor("#202832")),
+        ("TEXTCOLOR", (0, 0), (0, -1), colors.white),
+        ("FONTNAME", (0, 0), (0, -1), "Helvetica-Bold"),
+        ("FONTSIZE", (0, 0), (-1, -1), 11),
+        ("GRID", (0, 0), (-1, -1), 0.3, colors.HexColor("#c8cdd4")),
+        ("ROWBACKGROUNDS", (1, 0), (1, -1),
+         [colors.white, colors.HexColor("#f1f3f5")]),
+        ("ALIGN", (1, 1), (1, -1), "RIGHT"),
+        ("TOPPADDING", (0, 0), (-1, -1), 9),
+        ("BOTTOMPADDING", (0, 0), (-1, -1), 9),
+    ]))
+    story.append(table)
+    document.build(story)
+    return Response(
+        output.getvalue(), mimetype="application/pdf",
+        headers={"Content-Disposition": f"attachment; filename={filename}"},
+    )
+
+
 @app.get("/")
 def index():
     return render_template("index.html")
@@ -224,6 +317,22 @@ def export_sales_pdf():
     return pdf_download(
         "phonetrack-complete-sales-report.pdf",
         db.get_sales(), db.get_today_summary(), db.get_dashboard_stats(),
+    )
+
+
+@app.get("/export/stock.pdf")
+def export_stock_pdf():
+    return stock_pdf_download(
+        "phonetrack-current-stock-report.pdf",
+        db.get_inventory(), db.get_dashboard_stats(),
+    )
+
+
+@app.get("/export/daily-summary.pdf")
+def export_daily_summary_pdf():
+    return summary_pdf_download(
+        "phonetrack-daily-summary.pdf",
+        db.get_today_summary(), db.get_dashboard_stats(),
     )
 
 
