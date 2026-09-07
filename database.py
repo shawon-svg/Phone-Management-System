@@ -8,6 +8,7 @@ at runtime (see `switch_storage_folder`) without touching any UI code.
 """
 
 import json
+import os
 import shutil
 import sqlite3
 from datetime import date, datetime
@@ -34,7 +35,8 @@ def _load_configured_folder() -> Path:
 
 def _save_configured_folder(folder: Path) -> None:
     try:
-        CONFIG_PATH.write_text(json.dumps({"storage_folder": str(folder)}), encoding="utf-8")
+        CONFIG_PATH.write_text(json.dumps(
+            {"storage_folder": str(folder)}), encoding="utf-8")
     except OSError:
         pass
 
@@ -43,6 +45,8 @@ class Database:
     def __init__(self, db_path: Path = None):
         if db_path is not None:
             self.db_path = Path(db_path)
+        elif os.environ.get("PHONETRACK_DB_PATH"):
+            self.db_path = Path(os.environ["PHONETRACK_DB_PATH"])
         else:
             folder = _load_configured_folder()
             folder.mkdir(parents=True, exist_ok=True)
@@ -96,8 +100,10 @@ class Database:
                     sold_at     TEXT NOT NULL
                 )
             """)
-            conn.execute("CREATE INDEX IF NOT EXISTS idx_inventory_search ON inventory(model, chipset, ram, storage)")
-            conn.execute("CREATE INDEX IF NOT EXISTS idx_sales_sold_at ON sales(sold_at)")
+            conn.execute(
+                "CREATE INDEX IF NOT EXISTS idx_inventory_search ON inventory(model, chipset, ram, storage)")
+            conn.execute(
+                "CREATE INDEX IF NOT EXISTS idx_sales_sold_at ON sales(sold_at)")
 
     # ------------------------------------------------------------------ #
     # Inventory
@@ -136,18 +142,21 @@ class Database:
 
     def update_quantity(self, item_id: int, quantity: int):
         with self._connect() as conn:
-            conn.execute("UPDATE inventory SET quantity = ? WHERE id = ?", (quantity, item_id))
+            conn.execute(
+                "UPDATE inventory SET quantity = ? WHERE id = ?", (quantity, item_id))
 
     def delete_item(self, item_id: int) -> bool:
         with self._connect() as conn:
-            cur = conn.execute("DELETE FROM inventory WHERE id = ?", (item_id,))
+            cur = conn.execute(
+                "DELETE FROM inventory WHERE id = ?", (item_id,))
             return cur.rowcount > 0
 
     def sl_no_exists(self, sl_no: str) -> bool:
         if not sl_no:
             return False
         with self._connect() as conn:
-            row = conn.execute("SELECT 1 FROM inventory WHERE sl_no = ?", (sl_no,)).fetchone()
+            row = conn.execute(
+                "SELECT 1 FROM inventory WHERE sl_no = ?", (sl_no,)).fetchone()
             return row is not None
 
     # ------------------------------------------------------------------ #
