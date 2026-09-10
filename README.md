@@ -4,13 +4,28 @@ A clean, dark-mode desktop app for tracking phone stock and sales, built with **
 
 ## Setup
 
+1. Install Python dependencies:
+
 ```bash
 python3 -m pip install -r requirements.txt
+```
+
+2. Create a `.env` file in the project root and add your Supabase connection string:
+
+```env
+SUPABASE_DB_URL=postgresql://postgres:YOUR_PASSWORD@db.YOUR_PROJECT_REF.supabase.co:5432/postgres
+```
+
+You can copy the example from `.env.example`.
+
+3. Start the app:
+
+```bash
+source .venv/bin/activate
 python3 app.py
 ```
 
-Requires Python 3.9+. Data is stored locally in `phone_inventory.db` (SQLite),
-created automatically next to `app.py` on first run.
+Requires Python 3.9+ and a live Supabase PostgreSQL database.
 
 ## Use on iPhone
 
@@ -35,8 +50,9 @@ shared by email, WhatsApp, or AirDrop.
 ## Files
 
 - `app.py` — GUI (sidebar navigation + Stock / Chekout / Sales History screens)
-- `database.py` — SQLite persistence layer (all read/write logic lives here)
-- `phone_inventory.db` — created automatically; safe to delete to reset all data
+- `database.py` — Supabase PostgreSQL data layer
+- `.env` — stores your Supabase connection string locally
+- `.env.example` — template for the required database URL
 
 ## Features
 

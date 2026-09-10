@@ -1,20 +1,21 @@
 import requests
 import customtkinter as ctk
 import os
-import subprocess
-import sys
 from datetime import datetime
-from tkinter import filedialog, ttk, messagebox
+from tkinter import ttk, messagebox
 
 from database import Database
 
 ctk.set_appearance_mode("dark")
 ctk.set_default_color_theme("blue")
 
-FILE_URL = os.environ["FILE_URL"]
+FILE_URL = os.environ.get("FILE_URL")
 
 
 def get_file_bytes():
+    if not FILE_URL:
+        raise RuntimeError(
+            "FILE_URL is required to download the optional file.")
     response = requests.get(FILE_URL)
     response.raise_for_status()
     return response.content
@@ -782,68 +783,51 @@ class InventoryFrame(ctk.CTkFrame):
             self.after_cancel(self._search_job)
         self._search_job = self.after(220, self.refresh)
 
+    @staticmethod
+    def _mask_db_url(url):
+        """Hides the password portion of a Postgres connection string
+        so it's safe to display on screen."""
+        try:
+            if "://" in url and "@" in url:
+                scheme, rest = url.split("://", 1)
+                creds, host_part = rest.split("@", 1)
+                user = creds.split(":", 1)[0]
+                return f"{scheme}://{user}:••••••@{host_part}"
+        except Exception:
+            pass
+        return "postgresql://••••••"
+
     def _show_storage(self):
         storage = ctk.CTkToplevel(self)
         storage.title("Storage")
         storage.configure(fg_color=COLOR_BG)
         storage.resizable(False, False)
         storage.transient(self.winfo_toplevel())
-        center_toplevel(storage, self.winfo_toplevel(), 520, 340)
+        center_toplevel(storage, self.winfo_toplevel(), 520, 320)
 
         ctk.CTkLabel(storage, text="Storage",
                      font=FONT_TITLE).pack(pady=(24, 8))
         ctk.CTkLabel(
-            storage, text=f"Database file:\n{self.db.db_path}",
+            storage, text=f"Connected to Supabase (PostgreSQL):\n{self._mask_db_url(self.db.db_url)}",
             font=FONT_LABEL, text_color=COLOR_TEXT_MUTED, justify="left", wraplength=470,
         ).pack(anchor="w", padx=24, pady=(0, 12))
         ctk.CTkLabel(
             storage,
             text=f"Stock records: {len(self.db.get_inventory())}    Sold records: {len(self.db.get_sales())}",
             font=FONT_LABEL,
+        ).pack(anchor="w", padx=24, pady=(0, 12))
+        ctk.CTkLabel(
+            storage,
+            text=("This data is stored in the cloud and shared with every device "
+                  "connected to this Supabase project. To point at a different "
+                  "project, update SUPABASE_DB_URL and restart the app."),
+            font=("Segoe UI", 10), text_color=COLOR_TEXT_MUTED, justify="left", wraplength=470,
         ).pack(anchor="w", padx=24, pady=(0, 18))
 
-        def open_folder():
-            folder = str(self.db.db_path.parent)
-            if sys.platform == "darwin":
-                subprocess.run(["open", folder], check=False)
-            elif os.name == "nt":
-                os.startfile(folder)
-            else:
-                subprocess.run(["xdg-open", folder], check=False)
-
-        ctk.CTkButton(
-            storage, text="Open Storage Folder", fg_color=COLOR_ACCENT,
-            hover_color=COLOR_ACCENT_HOVER, command=open_folder,
-        ).pack(fill="x", padx=24, pady=(0, 10))
-
-        def choose_folder():
-            folder = filedialog.askdirectory(title="Choose Storage Folder")
-            if not folder:
-                return
-            target = os.path.join(folder, "phone_inventory.db")
-            if os.path.exists(target) and not messagebox.askyesno(
-                    "Replace Database?",
-                    "A phone_inventory.db already exists there. Replace it with the current database?"):
-                return
-            try:
-                self.db.switch_storage_folder(folder)
-            except OSError as error:
-                messagebox.showerror(
-                    "Storage Error", f"Could not change storage:\n{error}")
-                return
-            storage.destroy()
-            self._show_storage()
-            if self.on_change:
-                self.on_change()
-
-        ctk.CTkButton(
-            storage, text="Choose Storage Folder", fg_color=COLOR_CARD_ALT,
-            hover_color=COLOR_BORDER, command=choose_folder,
-        ).pack(fill="x", padx=24, pady=(0, 10))
         ctk.CTkButton(
             storage, text="Close", fg_color=COLOR_CARD_ALT,
             hover_color=COLOR_BORDER, command=storage.destroy,
-        ).pack(fill="x", padx=24)
+        ).pack(fill="x", padx=24, pady=(0, 24))
 
     def refresh(self):
         selected_before = self.tree.selection()
@@ -1375,7 +1359,7 @@ class App(ctk.CTk):
             bottom, text="", font=("Segoe UI", 11, "bold"), text_color=COLOR_TEXT_MUTED)
         self.clock_label.pack(anchor="w")
         ctk.CTkLabel(
-            bottom, text="v1.1 · Local Storage", font=("Segoe UI", 10), text_color="#5b5b66"
+            bottom, text="v2.0 · Cloud Sync (Supabase)", font=("Segoe UI", 10), text_color="#5b5b66"
         ).pack(anchor="w", pady=(2, 0))
         self._tick_clock()
 
@@ -1437,5 +1421,7 @@ class App(ctk.CTk):
 
 
 if __name__ == "__main__":
+    print("1. Starting App...")
     app = App()
+    print("2. App created!")
     app.mainloop()
